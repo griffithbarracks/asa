@@ -22,5 +22,8 @@ Invoices were sent out by stripe via email and provided a form for parents to pa
 = stripe_list_invoices.go
 
 ### Testing
-= stripe_test_addcard.go
-= stripe_test_invoice_pay.go
+- stripe_test_addcard.go
+- stripe_test_invoice_pay.go
+
+### Utilities
+- stripey/stripey.go
