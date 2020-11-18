@@ -6,7 +6,7 @@ Invoices were sent out by stripe via email and provided a form for parents to pa
 Commands are run at the command line to operate this system. For example:
 
 ```
-go run stripe_list_invoices.go
+> go run stripe_list_invoices.go
 ```
 
 ## Prerequisites
@@ -36,8 +36,7 @@ go run stripe_list_invoices.go
 
 ## Setup Configuration
 - .env file containing the test and live keys
-- In the top level directory run the following to source local packages: 
+- In the top level directory run the following to source local packages:
 ```
-export GOPATH=$(go env GOPATH):`pwd`
+> export GOPATH=$(go env GOPATH):`pwd`
 ```
-
