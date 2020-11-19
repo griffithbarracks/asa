@@ -18,6 +18,7 @@ Commands are run at the command line to operate this system. For example:
 
 ### Invoicing
 - stripe_invoice.go
+- stripe_invoice_offers.go
 - stripe_finalize_draft_invoices.go
 
 ### Refunds
@@ -30,6 +31,7 @@ Commands are run at the command line to operate this system. For example:
 ### Testing
 - stripe_test_addcard.go
 - stripe_test_invoice_pay.go
+- offers-202001119.csv
 
 ### Utility functions
 - src/stripey/stripey.go
