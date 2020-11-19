@@ -4,11 +4,14 @@ import (
   "github.com/joho/godotenv"
   "log"
   "os"
-  "strings"
   "fmt"
+  "strings"
+  "time"
 
   "github.com/stripe/stripe-go"
   "github.com/stripe/stripe-go/customer"
+  StripeInvoice "github.com/stripe/stripe-go/invoice"
+  "github.com/stripe/stripe-go/invoiceitem"
 )
 
 func SetKey(key string) {
@@ -54,4 +57,54 @@ func GetCustomerId(email string) string {
 		fmt.Printf("Customer [%s] not found.\n", email)
 	}
 	return *customerid
+}
+
+func CreateInvoice (email string, description string, amount int64, offerid string) string {
+  customerid := GetCustomerId(email)
+
+  ii_params := &stripe.InvoiceItemParams{
+    Customer: stripe.String(customerid),
+    Amount: stripe.Int64(amount),
+    Currency: stripe.String(string(stripe.CurrencyEUR)),
+    Description: stripe.String(description),
+  }
+  _, ii_err := invoiceitem.New(ii_params)
+  if ii_err != nil {
+    fmt.Printf("Error creating Invoice Item: %s %s\n", description, ii_err)
+    return "err"
+  }
+  // fmt.Printf("Created Invoice Line Item: %s, %d\n", ii.Description, ii.Amount)
+
+  params := &stripe.InvoiceParams{
+    Customer: stripe.String(customerid),
+    CollectionMethod: stripe.String("send_invoice"),
+    DaysUntilDue: stripe.Int64(1),
+    Description: stripe.String(description),
+    AutoAdvance: stripe.Bool(true),
+  }
+  params.AddMetadata("offer_id", offerid)
+
+  i, invoiceerr := StripeInvoice.New(params)
+
+  if invoiceerr != nil {
+    fmt.Printf("Error creating invoice for [%s] %s\n", email, invoiceerr)
+    return "err"
+  }
+
+  createdDate := time.Unix(i.Created,0).Format("2006-01-02 15:04")
+  description1 := strings.Replace(i.Lines.Data[0].Description, ",", " -",-1)
+
+  fmt.Printf("%s, %s, %s, %s, %s, offer_%s, %d, %s\n",
+    i.ID,
+    i.CustomerEmail,
+    i.Customer.ID,
+    createdDate,
+    description1,
+    i.Metadata["offer_id"],
+    i.AmountDue,
+    i.Status,
+  )
+
+  return i.ID
+
 }
