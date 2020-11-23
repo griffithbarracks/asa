@@ -62,11 +62,13 @@ func GetCustomerId(email string) string {
 func CreateInvoice (email string, description string, amount int64, offerid string) string {
   customerid := GetCustomerId(email)
 
+  description_clean := strings.Replace(description, ",", " -",-1)
+
   ii_params := &stripe.InvoiceItemParams{
     Customer: stripe.String(customerid),
     Amount: stripe.Int64(amount),
     Currency: stripe.String(string(stripe.CurrencyEUR)),
-    Description: stripe.String(description),
+    Description: stripe.String(description_clean),
   }
   _, ii_err := invoiceitem.New(ii_params)
   if ii_err != nil {
@@ -79,7 +81,7 @@ func CreateInvoice (email string, description string, amount int64, offerid stri
     Customer: stripe.String(customerid),
     CollectionMethod: stripe.String("send_invoice"),
     DaysUntilDue: stripe.Int64(1),
-    Description: stripe.String(description),
+    Description: stripe.String(description_clean),
     AutoAdvance: stripe.Bool(true),
   }
   params.AddMetadata("offer_id", offerid)
@@ -92,14 +94,13 @@ func CreateInvoice (email string, description string, amount int64, offerid stri
   }
 
   createdDate := time.Unix(i.Created,0).Format("2006-01-02 15:04")
-  description1 := strings.Replace(i.Lines.Data[0].Description, ",", " -",-1)
 
-  fmt.Printf("%s, %s, %s, %s, %s, offer_%s, %d, %s\n",
+  fmt.Printf("%s, %s, %s, %s, %s, %s, %d, %s\n",
     i.ID,
     i.CustomerEmail,
     i.Customer.ID,
     createdDate,
-    description1,
+    i.Description,
     i.Metadata["offer_id"],
     i.AmountDue,
     i.Status,

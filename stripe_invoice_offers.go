@@ -49,7 +49,7 @@ func main() {
 			continue
 		}
 
-    offerid := records[i][0]
+    offerid := "offer_"+records[i][0]
 		childname := records[i][2]
 		email := records[i][5]
 		asa := records[i][9]

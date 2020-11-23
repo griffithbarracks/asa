@@ -14,7 +14,7 @@ import (
 func main() {
   keyArg := flag.String("key","test","Key to use: Live or Test")
   startdateArg := flag.String("startdate","2020-01-01","Earliest date for invoice retrieval yyyy-mmm-dd")
-  statusArg := flag.String("status","","Invoice Status")
+  statusArg := flag.String("status","","Invoice Status: draft, open, paid, uncollectible, or void")
   flag.Parse()
   stripey.SetKey(*keyArg)
 
@@ -33,15 +33,20 @@ func main() {
   invoiceList := invoice.List(listparams)
 
   count := 0
-  fmt.Printf("#, invoice_id, customer_email, customer_id, date_created, description, amount, status, asa_offer_id\n")
+  fmt.Printf("#, invoice_id, customer_email, customer_id, date_created, description, asa_offer_id, amount, status, date_paid\n")
 
   for invoiceList.Next() {
     i := invoiceList.Invoice()
     count = count + 1
     createdDate := time.Unix(i.Created,0).Format("2006-01-02 15:04")
+    paidDate := ""
+    if (i.StatusTransitions.PaidAt>0) {
+      paidDate = time.Unix(i.StatusTransitions.PaidAt,0).Format("2006-01-02 15:04")
+    }
+
     description := strings.Replace(i.Lines.Data[0].Description, ",", " -",-1)
 
-    fmt.Printf("%d, %s, %s, %s, %s, %s, offer_%s, %d, %s\n",
+    fmt.Printf("%d, %s, %s, %s, %s, %s, %s, %d, %s, %s\n",
       count,
       i.ID,
       i.CustomerEmail,
@@ -51,6 +56,7 @@ func main() {
       i.Metadata["offer_id"],
       i.AmountDue,
       i.Status,
+      paidDate,
     )
   }
 }

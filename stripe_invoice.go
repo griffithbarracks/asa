@@ -31,12 +31,12 @@ func main() {
   offerid := *offerArg
 
   if !(strings.Contains(email,"@") || strings.Contains(email,".")) {
-    fmt.Printf("Invalid or specified *email*. Exiting.\n")
+    fmt.Printf("Invalid or unspecified *-email=*. Exiting.\n")
     return
   }
 
   if amount <= 0 {
-    fmt.Printf("Zero or negative or unspecified *amount*. Exiting.\n")
+    fmt.Printf("Zero or negative or unspecified *-amount=*. Exiting.\n")
     return
   }
 
