@@ -59,8 +59,29 @@ func GetCustomerId(email string) string {
 	return *customerid
 }
 
+func CreateCustomer(email string) string {
+
+  if strings.Compare(email,"") == 0 {
+    return *stripe.String("")
+  }
+
+  params := &stripe.CustomerParams{
+    Email: &email,
+  }
+  c, _ := customer.New(params)
+	return c.ID
+}
+
 func CreateInvoice (email string, description string, amount int64, offerid string) string {
+
   customerid := GetCustomerId(email)
+  if len(customerid)<1 {
+    // fmt.Println("Error creating invoice no customer id found.")
+    CreateCustomer(email)
+    customerid = GetCustomerId(email)
+    // return "err"
+  }
+  fmt.Printf("Customer [%s] id = [%s]\n", email, customerid)
 
   description_clean := strings.Replace(description, ",", " -",-1)
 

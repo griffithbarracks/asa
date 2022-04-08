@@ -6,7 +6,7 @@ Invoices were sent out by stripe via email and provided a form for parents to pa
 Commands are run at the command line to operate this system. For example:
 
 ```
-> go run stripe_list_invoices.go
+> go run stripe.go ls -startdate=2022-01-10 -key=test -status=draft
 ```
 
 ## Prerequisites
@@ -14,7 +14,13 @@ Commands are run at the command line to operate this system. For example:
 - [stripe-go](https://github.com/stripe/stripe-go)
 - [godotenv](https://github.com/joho/godotenv)
 
-## Files
+## Commands
+
+### Listing
+- `stripe_list_invoices.go`
+- _list of invoices and their details including paid status_
+- `stripe_list_charges.go`
+- _list all charges - charge ids can be used for refunds_
 
 ### Invoicing
 - `stripe_invoice.go`
@@ -23,12 +29,6 @@ Commands are run at the command line to operate this system. For example:
   - _create invoices from an offers csv file (see example csv)_
 - `stripe_finalize_draft_invoices.go`
   - _finalize invoices to trigger email for payment_
-
-### Listing
-  - `stripe_list_charges.go`
-    - _list all charges - charge ids can be used for refunds_
-  - `stripe_list_invoices.go`
-    - _list of invoices and their details including paid status_
 
 ### Refunds
 - `stripe_refund.go`
@@ -43,12 +43,17 @@ Commands are run at the command line to operate this system. For example:
   - _example offers file used for invoicing offers_
 
 ### Utility functions
-- `src/stripey/stripey.go`
+- `./stripey/stripey.go`
   - _common utility functions for stripe_
 
 ## Setup Configuration
 - .env file containing the test and live keys
+- In the go.mod file add the following replacement:
+
+```
+replace github.com/griffithbarracks/utils/stripey v0.0.1 => ./stripey
+```
+
 - In the top level directory run the following to source local packages:
-```
-> export GOPATH=$(go env GOPATH):`pwd`
-```
+
+```go get github.com/griffithbarracks/utils/stripey@v0.0.1```
