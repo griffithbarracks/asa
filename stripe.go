@@ -166,19 +166,11 @@ func Offers (keyArg *string, offerFileArg *string) {
 			continue
 		}
 
-    offerid := "offer_"+records[i][0]
-		childname := records[i][2]
-		email := records[i][5]
-		asa := records[i][9]
-		amounteuro, _ := strconv.ParseFloat(records[i][10],32)
-		amount := int64(amounteuro * 100)
-    donationstring := records[i][11]
-		donation, _ := strconv.ParseFloat(donationstring,32)
-
-		description := asa + " for " + childname
-		if (donation > 0) {
-			description = description + ", incl. donation of €" + donationstring;
-		}
+		email := records[i][0]
+    description :=  records[i][1]
+    amounteuro, _ := strconv.ParseFloat(records[i][2],32)
+    amount := int64(amounteuro * 100)
+    offerid := "offer_"+records[i][3]
 
     stripey.CreateInvoice(email, description, int64(amount), offerid)
 	}

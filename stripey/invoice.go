@@ -41,7 +41,7 @@ func ListInvoices (startdateArg *string, statusArg *string) {
     description := strings.Replace(i.Lines.Data[0].Description, ",", " -",-1)
 
     count += 1
-    fmt.Printf("    %d, %s, %s, %s, %s, %s, %s, %d, %s, %s\n",
+    fmt.Printf("%d, %s, %s, %s, %s, %s, %s, %d, %s, %s\n",
       count,
       i.ID,
       i.CustomerEmail,
@@ -97,7 +97,7 @@ func CreateInvoice (email string, description string, amount int64, offerid stri
 
   createdDate := time.Unix(i.Created,0).Format("2006-01-02 15:04")
 
-  fmt.Printf("    %s, %s, %s, %s, %s, %s, %d, %s\n",
+  fmt.Printf("%s, %s, %s, %s, %s, %s, %d, %s\n",
     i.ID,
     i.CustomerEmail,
     i.Customer.ID,
@@ -146,7 +146,7 @@ func FinalizeInvoices (startdateArg *string, finalizeArg *string) {
     // Removing comma in description for csv format
     description := strings.Replace(i.Lines.Data[0].Description, ",", " -",-1)
 
-    fmt.Printf("    %d, %s, %s, %s, %s, %s, %d, %s, %s",
+    fmt.Printf("%d, %s, %s, %s, %s, %s, %d, %s, %s",
       count,
       i.ID,
       i.CustomerEmail,
