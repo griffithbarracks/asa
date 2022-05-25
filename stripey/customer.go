@@ -44,12 +44,29 @@ func GetCustomer(email string) stripe.Customer  {
 
   fmt.Printf("    Customer: %s [%s]\n", c.Email, c.ID)
   fmt.Printf("      Default: %s\n", c.DefaultSource)
+  fmt.Printf("      Sources: %s\n", c.Sources)
 	return *c
 }
 
+func ListCustomers() {
+  clparams := &stripe.CustomerListParams{}
+  clparams.Filters.AddFilter("limit", "", "200")
+
+  i := customer.List(clparams)
+  found := 0
+  for i.Next() {
+    found += 1
+    customer := i.Customer()
+    fmt.Printf("Customer: %s, %s, %s\n", customer.Email, customer.ID, customer.DefaultSource)
+  }
+
+  if found == 0 {
+    fmt.Printf("Customers not found.\n")
+  }
+
+}
 
 func CreateCustomer(email string) string {
-
   if strings.Compare(email,"") == 0 {
     return *stripe.String("")
   }

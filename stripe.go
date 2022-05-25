@@ -29,9 +29,20 @@ func main() {
   finalize_startdate := finalizeCmd.String("startdate","2020-01-02","Earliest date for invoice retrieval yyyy-mmm-dd")
   finalize_perform := finalizeCmd.String("finalize","false","Finalize if set to true; false will list only")
 
+  sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
+  send_key := sendCmd.String("key","test","Key to use: Live or Test")
+  send_invoiceid := sendCmd.String("invoice","","invoice id: e.g. 'in_1Klz3u2eZvKYlo2CYU1wdKoW'")
+
   voidCmd := flag.NewFlagSet("void", flag.ExitOnError)
   void_key := voidCmd.String("key","test","Key to use: Live or Test")
   void_invoiceid := voidCmd.String("invoice","","invoice id: e.g. 'in_1Klz3u2eZvKYlo2CYU1wdKoW'")
+
+  deleteCmd := flag.NewFlagSet("deletedraft", flag.ExitOnError)
+  delete_key := deleteCmd.String("key","test","Key to use: Live or Test")
+  delete_invoiceid := deleteCmd.String("invoice","","invoice id: e.g. 'in_1Klz3u2eZvKYlo2CYU1wdKoW'")
+
+  delAllDraftsCmd := flag.NewFlagSet("deletealldrafts", flag.ExitOnError)
+  delAllDrafts_key := delAllDraftsCmd.String("key","test","Key to use: Live or Test")
 
   chargesCmd := flag.NewFlagSet("charges", flag.ExitOnError)
   charges_key := chargesCmd.String("key","test","Key to use: Live or Test")
@@ -54,6 +65,8 @@ func main() {
   getcustomer_key := getcustomerCmd.String("key","test","Key to use: Live or Test")
   getcustomer_email := getcustomerCmd.String("email","","Email of customer")
 
+  lsCustomersCmd := flag.NewFlagSet("lscustomers", flag.ExitOnError)
+  lsCustomers_key := lsCustomersCmd.String("key","test","Key to use: Live or Test")
 
   flag.Parse()
 
@@ -82,6 +95,21 @@ func main() {
       stripey.SetKey(*void_key)
       stripey.Void (void_invoiceid)
 
+  case "send":
+      sendCmd.Parse(os.Args[2:])
+      stripey.SetKey(*send_key)
+      stripey.Send (send_invoiceid)
+
+  case "delete":
+      deleteCmd.Parse(os.Args[2:])
+      stripey.SetKey(*delete_key)
+      stripey.Delete (delete_invoiceid)
+
+  case "delalldrafts":
+      delAllDraftsCmd.Parse(os.Args[2:])
+      stripey.SetKey(*delAllDrafts_key)
+      stripey.DeleteAllDrafts()
+
   case "charges":
       chargesCmd.Parse(os.Args[2:])
       stripey.SetKey(*charges_key)
@@ -106,8 +134,14 @@ func main() {
       stripey.SetKey(*getcustomer_key)
       stripey.GetCustomer (*getcustomer_email)
 
+  case "lscustomers":
+      lsCustomersCmd.Parse(os.Args[2:])
+      stripey.SetKey(*lsCustomers_key)
+      stripey.ListCustomers()
+
   default:
-      fmt.Println("Expected subcommands: 'ls', 'invoice', 'finalize', 'void', 'charges', 'offers', 'testpay', 'testcard', 'getcustomer'")
+      fmt.Println("Invoicing subcommands: 'ls', 'invoice', 'finalize', 'send', 'void', 'delete', 'delalldrafts'")
+      fmt.Println("Other subcommands: 'charges', 'offers', 'testpay', 'testcard', 'getcustomer', 'lscustomers'")
       return
   }
 }

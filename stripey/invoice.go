@@ -84,7 +84,7 @@ func CreateInvoice (email string, description string, amount int64, offerid stri
     CollectionMethod: stripe.String("send_invoice"),
     DaysUntilDue: stripe.Int64(1),
     Description: stripe.String(description_clean),
-    AutoAdvance: stripe.Bool(true),
+    AutoAdvance: stripe.Bool(false),
   }
   params.AddMetadata("offer_id", offerid)
 
@@ -111,6 +111,19 @@ func CreateInvoice (email string, description string, amount int64, offerid stri
   return i.ID
 }
 
+func Send (invoiceArg *string) {
+  invoice_id := *invoiceArg
+  if len(invoice_id) < 1 {
+    fmt.Printf("Invalid invoice id '%s'\n", *invoiceArg)
+    return
+  }
+  in, _ := invoice.SendInvoice(
+    invoice_id,
+    nil,
+  )
+  fmt.Printf("Sent invoice '%s'\n", in.ID)
+}
+
 func Void (invoiceArg *string) {
   invoice_id := *invoiceArg
   if len(invoice_id) < 1 {
@@ -122,6 +135,62 @@ func Void (invoiceArg *string) {
     nil,
   )
   fmt.Printf("Voided invoice '%s'\n", in.ID)
+}
+
+func Delete (invoiceArg *string) {
+  invoice_id := *invoiceArg
+  if len(invoice_id) < 1 {
+    fmt.Printf("Invalid invoice id '%s'\n", *invoiceArg)
+    return
+  }
+  in, _ := invoice.Del(
+    invoice_id,
+    nil,
+  )
+  fmt.Printf("Deleted invoice '%s'\n", in.ID)
+}
+
+func DeleteAllDrafts () {
+
+  listparams := &stripe.InvoiceListParams{}
+  listparams.Filters.AddFilter("limit", "", "100")
+  listparams.Filters.AddFilter("status", "", "draft")
+
+  invoiceList := invoice.List(listparams)
+
+  count := 0
+  fmt.Printf("#, invoice_id, customer_email, customer_id, date_created, description, asa_offer_id, amount, status, date_paid\n")
+
+  for invoiceList.Next() {
+    i := invoiceList.Invoice()
+    createdDate := time.Unix(i.Created,0).Format("2006-01-02 15:04")
+    paidDate := ""
+    if (i.StatusTransitions.PaidAt>0) {
+      paidDate = time.Unix(i.StatusTransitions.PaidAt,0).Format("2006-01-02 15:04")
+    }
+    description := strings.Replace(i.Lines.Data[0].Description, ",", " -",-1)
+
+    count += 1
+    fmt.Printf("%d, %s, %s, %s, %s, %s, %s, %d, %s, %s\n",
+      count,
+      i.ID,
+      i.CustomerEmail,
+      i.Customer.ID,
+      createdDate,
+      description,
+      i.Metadata["offer_id"],
+      i.AmountRemaining,
+      i.Status,
+      paidDate,
+    )
+
+    in, _ := invoice.Del(
+      i.ID,
+      nil,
+    )
+    fmt.Printf("Deleted invoice '%s'\n", in.ID)
+  }
+
 }
 
 func FinalizeInvoices (startdateArg *string, finalizeArg *string) {
@@ -143,7 +212,7 @@ func FinalizeInvoices (startdateArg *string, finalizeArg *string) {
     i := invoiceList.Invoice()
     count = count + 1
     createdDate := time.Unix(i.Created,0).Format("2006-01-02 15:04")
-    // Removing comma in description for csv format
+    // Removing comma from description text - obsolete?
     description := strings.Replace(i.Lines.Data[0].Description, ",", " -",-1)
 
     fmt.Printf("%d, %s, %s, %s, %s, %s, %d, %s, %s",
@@ -160,13 +229,19 @@ func FinalizeInvoices (startdateArg *string, finalizeArg *string) {
 
     if (finalize) {
       finalizeInvoiceParams := &stripe.InvoiceFinalizeParams{
-        AutoAdvance: stripe.Bool(true),
+        AutoAdvance: stripe.Bool(false),
       }
       final_invoice, invoiceerr := invoice.FinalizeInvoice(i.ID, finalizeInvoiceParams)
       if invoiceerr != nil {
         fmt.Printf("Error finalizing invoice for [%i] %s\n", i.ID, invoiceerr)
       }
       fmt.Printf (" >>> %s\n", final_invoice.Status)
+
+      invoice.SendInvoice(
+        i.ID,
+        nil,
+      )
+
     } else {
       fmt.Printf ("\n")
     }
@@ -177,7 +252,7 @@ func TestPayInvoice (invoiceArg *string, amountArg *string) {
   SetKey("test")
 
   if strings.Compare(*invoiceArg,"") == 0 {
-    fmt.Printf("No *invoice_id* specified. Exiting.\n")
+    fmt.Printf("No *invoice* specified. Exiting.\n")
     return
   }
 
