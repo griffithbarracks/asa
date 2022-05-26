@@ -124,6 +124,35 @@ func Send (invoiceArg *string) {
   fmt.Printf("Sent invoice '%s'\n", in.ID)
 }
 
+func MailOpenInvoices (startdateArg *string, sendArg *string) {
+
+  const shortFormDate = "2006-01-02"
+  startdate, _ := time.Parse(shortFormDate,*startdateArg)
+  createdTimeUnix := strconv.FormatInt(startdate.Unix(),10)
+  listparams := &stripe.InvoiceListParams{}
+  listparams.Filters.AddFilter("limit", "", "100")
+  listparams.Filters.AddFilter("status", "", "open")
+  listparams.Filters.AddFilter("created", "gt", createdTimeUnix)
+
+  invoiceList := invoice.List(listparams)
+
+  count := 0
+  execute, _ := strconv.ParseBool(*sendArg)
+
+  for invoiceList.Next() {
+    i := invoiceList.Invoice()
+    count += 1
+    if (execute) {
+      in, _ := invoice.SendInvoice(
+        i.ID,
+        nil,
+      )
+      fmt.Printf("Emailed %s to %s\n", in.ID, in.CustomerEmail)
+    }
+  }
+  fmt.Printf("Emailed %d invoices\n", count)
+}
+
 func Void (invoiceArg *string) {
   invoice_id := *invoiceArg
   if len(invoice_id) < 1 {
@@ -136,6 +165,51 @@ func Void (invoiceArg *string) {
   )
   fmt.Printf("Voided invoice '%s'\n", in.ID)
 }
+
+func VoidOpenInvoices (startdateArg *string, enddateArg *string, performArg *string) {
+  const shortFormDate = "2006-01-02"
+  startdate, _ := time.Parse(shortFormDate,*startdateArg)
+  enddate, _ := time.Parse(shortFormDate,*enddateArg)
+
+  startTimeUnix := strconv.FormatInt(startdate.Unix(),10)
+  endTimeUnix := strconv.FormatInt(enddate.Unix(),10)
+
+  listparams := &stripe.InvoiceListParams{}
+  listparams.Filters.AddFilter("limit", "", "100")
+  listparams.Filters.AddFilter("created", "gt", startTimeUnix)
+  listparams.Filters.AddFilter("created", "lt", endTimeUnix)
+  listparams.Filters.AddFilter("status", "", "open")
+
+  invoiceList := invoice.List(listparams)
+
+  count := 0
+  perform, _ := strconv.ParseBool(*performArg)
+
+  fmt.Printf("#, invoice_id, customer_email, customer_id, date_created, description, asa_offer_id, amount, status, date_paid\n")
+
+  for invoiceList.Next() {
+    i := invoiceList.Invoice()
+
+    createdDate := time.Unix(i.Created,0).Format("2006-01-02 15:04")
+    count += 1
+
+    fmt.Printf("%d, %s, %s, %s",
+      count,
+      i.ID,
+      i.CustomerEmail,
+      createdDate,
+    )
+    if (perform) {
+      in, _ := invoice.VoidInvoice(
+        i.ID,
+        nil,
+      )
+      fmt.Printf(" >> %s", in.Status)
+    }
+    fmt.Printf("\n")
+  }
+}
+
 
 func Delete (invoiceArg *string) {
   invoice_id := *invoiceArg

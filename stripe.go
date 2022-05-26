@@ -26,16 +26,27 @@ func main() {
 
   finalizeCmd := flag.NewFlagSet("finalize", flag.ExitOnError)
   finalize_key := finalizeCmd.String("key","test","Key to use: Live or Test")
-  finalize_startdate := finalizeCmd.String("startdate","2020-01-02","Earliest date for invoice retrieval yyyy-mmm-dd")
+  finalize_startdate := finalizeCmd.String("startdate","2022-05-26","Earliest date for charge retrieval")
   finalize_perform := finalizeCmd.String("finalize","false","Finalize if set to true; false will list only")
 
   sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
   send_key := sendCmd.String("key","test","Key to use: Live or Test")
   send_invoiceid := sendCmd.String("invoice","","invoice id: e.g. 'in_1Klz3u2eZvKYlo2CYU1wdKoW'")
 
+  mailOpenInvoicesCmd := flag.NewFlagSet("mailopeninvoices", flag.ExitOnError)
+  mailOpenInvoices_key := mailOpenInvoicesCmd.String("key","test","Key to use: Live or Test")
+  mailOpenInvoices_startdate := mailOpenInvoicesCmd.String("startdate","2022-05-26","Earliest date for charge retrieval")
+  mailOpenInvoices_send := mailOpenInvoicesCmd.String("send","false","Send email if true, false will list only")
+
   voidCmd := flag.NewFlagSet("void", flag.ExitOnError)
   void_key := voidCmd.String("key","test","Key to use: Live or Test")
   void_invoiceid := voidCmd.String("invoice","","invoice id: e.g. 'in_1Klz3u2eZvKYlo2CYU1wdKoW'")
+
+  voidOpenInvoicesCmd := flag.NewFlagSet("voidopeninvoices", flag.ExitOnError)
+  voidOpenInvoices_key := voidOpenInvoicesCmd.String("key","test","Key to use: Live or Test")
+  voidOpenInvoices_perform := voidOpenInvoicesCmd.String("perform","false","Void invoices if true, false will list only")
+  voidOpenInvoices_startdate := voidOpenInvoicesCmd.String("startdate","2020-01-01","Earliest date of invoice creation")
+  voidOpenInvoices_enddate := voidOpenInvoicesCmd.String("enddate","2022-05-26","Latest date of invoice creation")
 
   deleteCmd := flag.NewFlagSet("deletedraft", flag.ExitOnError)
   delete_key := deleteCmd.String("key","test","Key to use: Live or Test")
@@ -95,10 +106,20 @@ func main() {
       stripey.SetKey(*void_key)
       stripey.Void (void_invoiceid)
 
+  case "voidopeninvoices":
+      voidOpenInvoicesCmd.Parse(os.Args[2:])
+      stripey.SetKey(*voidOpenInvoices_key)
+      stripey.VoidOpenInvoices (voidOpenInvoices_startdate, voidOpenInvoices_enddate, voidOpenInvoices_perform)
+
   case "send":
       sendCmd.Parse(os.Args[2:])
       stripey.SetKey(*send_key)
       stripey.Send (send_invoiceid)
+
+  case "mailopeninvoices":
+      mailOpenInvoicesCmd.Parse(os.Args[2:])
+      stripey.SetKey(*mailOpenInvoices_key)
+      stripey.MailOpenInvoices(mailOpenInvoices_startdate, mailOpenInvoices_send)
 
   case "delete":
       deleteCmd.Parse(os.Args[2:])
@@ -202,7 +223,8 @@ func Offers (keyArg *string, offerFileArg *string) {
 
 		email := records[i][0]
     description :=  records[i][1]
-    amounteuro, _ := strconv.ParseFloat(records[i][2],32)
+    amountstring := strings.Replace(records[i][2], "€", "",-1)
+    amounteuro, _ := strconv.ParseFloat(amountstring,32)
     amount := int64(amounteuro * 100)
     offerid := "offer_"+records[i][3]
 
