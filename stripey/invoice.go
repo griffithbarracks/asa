@@ -148,6 +148,8 @@ func MailOpenInvoices (startdateArg *string, sendArg *string) {
         nil,
       )
       fmt.Printf("Emailed %s to %s\n", in.ID, in.CustomerEmail)
+    } else {
+      fmt.Printf("Open invoice %s for %s\n", i.ID, i.CustomerEmail)   
     }
   }
   fmt.Printf("Emailed %d invoices\n", count)

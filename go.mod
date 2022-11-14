@@ -2,10 +2,10 @@ module stripe.go
 
 go 1.17
 
-replace github.com/griffithbarracks/utils/stripey v0.0.1 => ./stripey
+replace github.com/griffithbarracks/asa/stripey v0.0.1 => ./stripey
 
 require (
-	github.com/griffithbarracks/utils/stripey v0.0.1
+	github.com/griffithbarracks/asa/stripey v0.0.1
 	github.com/joho/godotenv v1.4.0
 	github.com/stripe/stripe-go v70.15.0+incompatible
 )

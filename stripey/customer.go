@@ -10,6 +10,37 @@ import (
 )
 
 
+func UpdateCustomerEmail(before_email string, after_email string) {
+  clparams := &stripe.CustomerListParams{}
+	clparams.Filters.AddFilter("limit", "", "5")
+	clparams.Filters.AddFilter("email", "", before_email)
+	customer_list := customer.List(clparams)
+  found := 0
+  fmt.Printf("Seaching for customer: %s\n", before_email)
+	for customer_list.Next() {
+    found += 1
+		cust := customer_list.Customer()
+
+    if found == 1 {
+      fmt.Printf("    Customer: %s [%s]\n", cust.Email, cust.ID)
+      customer_id := cust.ID
+      params := &stripe.CustomerParams{}
+      params.Email = &after_email
+      c, _ := customer.Update(
+        customer_id,
+        params,
+      )
+      fmt.Printf("    ==> Updated Customer: %s [%s]\n", c.Email, c.ID)
+    } else {
+      fmt.Printf("Additional found customer: %s, %s\n", cust.Email, cust.ID)
+    }
+	}
+	if found == 0 {
+		fmt.Printf("Customer [%s] not found.\n", before_email)
+	}
+
+}
+
 func GetCustomerId(email string) string {
 
   if strings.Compare(email,"") == 0 {
@@ -19,12 +50,12 @@ func GetCustomerId(email string) string {
 	clparams := &stripe.CustomerListParams{}
 	clparams.Filters.AddFilter("limit", "", "5")
 	clparams.Filters.AddFilter("email", "", email)
-	i := customer.List(clparams)
+	customer_list := customer.List(clparams)
   customerid := stripe.String("")
   found := 0
-	for i.Next() {
+	for customer_list.Next() {
     found += 1
-		customer := i.Customer()
+		customer := customer_list.Customer()
 		customerid = stripe.String(customer.ID)
     if found > 1 {
       fmt.Printf("Additional found customer: %s, %s\n", customer.Email, customer.ID)
@@ -39,25 +70,48 @@ func GetCustomerId(email string) string {
 
 func GetCustomer(email string) stripe.Customer  {
 
-  customerid := GetCustomerId(email)
-  c, _ := customer.Get(customerid, nil)
+  var cust stripe.Customer
 
-  fmt.Printf("    Customer: %s [%s]\n", c.Email, c.ID)
-  fmt.Printf("      Default: %s\n", c.DefaultSource)
-  fmt.Printf("      Sources: %s\n", c.Sources)
-	return *c
+  if strings.Compare(email,"") == 0 {
+    return cust
+  }
+
+	clparams := &stripe.CustomerListParams{}
+	clparams.Filters.AddFilter("limit", "", "5")
+	clparams.Filters.AddFilter("email", "", email)
+	customer_list := customer.List(clparams)
+  found := 0
+	for customer_list.Next() {
+    found += 1
+		cust := customer_list.Customer()
+    if found == 1 {
+      fmt.Printf("Customer: %s [%s]\n", cust.Email, cust.ID)
+    } else {
+      fmt.Printf("Additional found customer: %s, %s\n", cust.Email, cust.ID)
+    }
+	}
+
+	if found == 0 {
+		fmt.Printf("Customer: %s not found.\n", email)
+    lowercase_email := strings.ToLower(email)
+    if (lowercase_email != email) {
+      return GetCustomer(lowercase_email)
+    }
+	}
+
+	return cust
 }
 
 func ListCustomers() {
   clparams := &stripe.CustomerListParams{}
   clparams.Filters.AddFilter("limit", "", "200")
 
-  i := customer.List(clparams)
+  customer_list := customer.List(clparams)
   found := 0
-  for i.Next() {
+  for customer_list.Next() {
     found += 1
-    customer := i.Customer()
-    fmt.Printf("Customer: %s, %s, %s\n", customer.Email, customer.ID, customer.DefaultSource)
+    customer := customer_list.Customer()
+    fmt.Printf("%04d, %s, %s\n", found, customer.Email, customer.ID)
   }
 
   if found == 0 {
@@ -71,73 +125,10 @@ func CreateCustomer(email string) string {
     return *stripe.String("")
   }
 
+  lowercase_email := strings.ToLower(email)
   params := &stripe.CustomerParams{
-    Email: &email,
+    Email: &lowercase_email,
   }
   c, _ := customer.New(params)
 	return c.ID
-}
-
-func CustomerAddCard (emailArg *string, tokenArg *string) {
-
-  if strings.Compare(*emailArg,"") == 0 {
-    fmt.Printf("No email specified. Exiting.\n")
-    return
-  }
-
-  if ! (strings.Compare(*tokenArg,"tok_visa") == 0 || strings.Compare(*tokenArg,"tok_mastercard") == 0) {
-    fmt.Printf("Invalid token. Exiting.\n")
-    return
-  }
-
-  customerid := GetCustomerId (*emailArg)
-  // customer := GetCustomer(*emailArg)
-
-  // card_params := &stripe.CardParams{
-  //   Customer: stripe.String(customerid),
-  //   Token: stripe.String(*tokenArg),
-  // }
-  //
-  // c, err := card.New(card_params)
-  // if err!= nil {
-  //   fmt.Println(err)
-  //   return
-  // }
-  //
-  source_params := &stripe.SourceParams{
-    Token: stripe.String(*tokenArg),
-  }
-  // s, err := source.New(source_params)
-
-  customer_params := &stripe.CustomerParams{
-    Source: source_params,
-  }
-
-  updated_cust, update_err := customer.Update (
-    customerid,
-    customer_params,
-  )
-  if update_err != nil {
-    fmt.Printf("Error updating customer\n")
-  }
-
-  fmt.Printf("Card source %s added for %s [%s]\n", updated_cust.Sources, *emailArg, customerid)
-}
-
-
-func CustomerGetCards (emailArg *string) {
-
-  if strings.Compare(*emailArg,"") == 0 {
-    fmt.Printf("No email specified. Exiting.\n")
-    return
-  }
-
-  // GetCustomer (*emailArg)
-  // customerid := GetCustomerId (*emailArg)
-  // card_params := &stripe.CardParams{
-  //   Customer: stripe.String(customerid),
-  // }
-  // c, _ := card.Get(card_params)
-  //
-  // fmt.Printf("Card %s added for %s\n", c.ID, *emailArg)
 }
