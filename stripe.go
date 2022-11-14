@@ -8,21 +8,10 @@ import (
   "flag"
   "io/ioutil"
   "encoding/csv"
-  "github.com/griffithbarracks/utils/stripey"
+  "github.com/griffithbarracks/asa/stripey"
 )
 
 func main() {
-  lsCmd := flag.NewFlagSet("ls", flag.ExitOnError)
-  key := lsCmd.String("key","test","Key to use: Live or Test")
-  startdate := lsCmd.String("startdate","2020-01-01","Earliest date for invoice retrieval yyyy-mmm-dd")
-  status := lsCmd.String("status","","Invoice Status: draft, open, paid, uncollectible, or void")
-
-  invoiceCmd := flag.NewFlagSet("invoice", flag.ExitOnError)
-  invoice_key := invoiceCmd.String("key","test","Key to use: Live or Test")
-  invoice_email := invoiceCmd.String("email","","Email to send invoice")
-  invoice_amount := invoiceCmd.String("amount","0","Amount to invoice in cent")
-  invoice_desc := invoiceCmd.String("desc","GBMDS ASA","Description in invoice")
-  invoice_offer := invoiceCmd.String("offerid","","Offer Id for Tracking")
 
   finalizeCmd := flag.NewFlagSet("finalize", flag.ExitOnError)
   finalize_key := finalizeCmd.String("key","test","Key to use: Live or Test")
@@ -68,33 +57,50 @@ func main() {
   testPay_invoice := testPayCmd.String("invoice","","invoice id: e.g. 'in_1Klz3u2eZvKYlo2CYU1wdKoW'")
   testPay_amount := testPayCmd.String("amount","0","Amount to invoice in cent")
 
-  testcardCmd := flag.NewFlagSet("testcard", flag.ExitOnError)
-  testcard_email := testcardCmd.String("email","","Email of customer")
-  testcard_token := testcardCmd.String("token","tok_1234","Card Token")
+  // testcardCmd := flag.NewFlagSet("testcard", flag.ExitOnError)
+  // testcard_email := testcardCmd.String("email","","Email of customer")
+  // testcard_token := testcardCmd.String("token","tok_1234","Card Token")
 
   getcustomerCmd := flag.NewFlagSet("getcustomer", flag.ExitOnError)
   getcustomer_key := getcustomerCmd.String("key","test","Key to use: Live or Test")
   getcustomer_email := getcustomerCmd.String("email","","Email of customer")
 
+  updatecustomerCmd := flag.NewFlagSet("updatecustomer", flag.ExitOnError)
+  updatecustomer_key := updatecustomerCmd.String("key","test","Key to use: Live or Test")
+  updatecustomer_email1 := updatecustomerCmd.String("email1","","Current email of customer")
+  updatecustomer_email2 := updatecustomerCmd.String("email2","","New email of customer")
+
   lsCustomersCmd := flag.NewFlagSet("lscustomers", flag.ExitOnError)
   lsCustomers_key := lsCustomersCmd.String("key","test","Key to use: Live or Test")
 
-  flag.Parse()
 
   if len(os.Args) < 2 {
       fmt.Println("Missing subcommand: e.g. 'ls', 'finalize', 'offers', 'getcustomer'")
       os.Exit(1)
   }
 
+  // flag.Parse()
+
   switch os.Args[1] {
   case "ls":
+      lsCmd := flag.NewFlagSet("ls", flag.ExitOnError)
+      key := lsCmd.String("key","test","Key to use: Live or Test")
+      startdate := lsCmd.String("startdate","2020-01-01","Earliest date for invoice retrieval yyyy-mmm-dd")
+      status := lsCmd.String("status","","Invoice Status: draft, open, paid, uncollectible, or void")
       lsCmd.Parse(os.Args[2:])
       stripey.SetKey(*key)
       stripey.ListInvoices (startdate, status)
 
   case "invoice":
+      invoiceCmd := flag.NewFlagSet("invoice", flag.ExitOnError)
+      invoice_key := invoiceCmd.String("key","test","Key to use: Live or Test")
+      invoice_email := invoiceCmd.String("email","","Email to send invoice")
+      invoice_amount := invoiceCmd.String("amount","0","Amount to invoice in cent")
+      invoice_desc := invoiceCmd.String("desc","GBMDS ASA","Description in invoice")
+      invoice_offer := invoiceCmd.String("offerid","","Offer Id for Tracking")
       invoiceCmd.Parse(os.Args[2:])
-      Invoice (invoice_key, invoice_email, invoice_amount, invoice_desc, invoice_offer)
+      stripey.SetKey(*invoice_key)
+      Invoice (invoice_email, invoice_amount, invoice_desc, invoice_offer)
 
   case "finalize":
       finalizeCmd.Parse(os.Args[2:])
@@ -145,15 +151,20 @@ func main() {
       stripey.SetKey("test")
       stripey.TestPayInvoice(testPay_invoice, testPay_amount)
 
-  case "testcard":
-      testcardCmd.Parse(os.Args[2:])
-      stripey.SetKey("test")
-      stripey.CustomerAddCard(testcard_email, testcard_token)
+  // case "testcard":
+  //     testcardCmd.Parse(os.Args[2:])
+  //     stripey.SetKey("test")
+      // stripey.CustomerAddCard(testcard_email, testcard_token)
 
   case "getcustomer":
       getcustomerCmd.Parse(os.Args[2:])
       stripey.SetKey(*getcustomer_key)
       stripey.GetCustomer (*getcustomer_email)
+
+  case "updatecustomer":
+      updatecustomerCmd.Parse(os.Args[2:])
+      stripey.SetKey(*updatecustomer_key)
+      stripey.UpdateCustomerEmail (*updatecustomer_email1, *updatecustomer_email2)
 
   case "lscustomers":
       lsCustomersCmd.Parse(os.Args[2:])
@@ -162,13 +173,12 @@ func main() {
 
   default:
       fmt.Println("Invoicing subcommands: 'ls', 'invoice', 'finalize', 'send', 'void', 'delete', 'delalldrafts'")
-      fmt.Println("Other subcommands: 'charges', 'offers', 'testpay', 'testcard', 'getcustomer', 'lscustomers'")
+      fmt.Println("Other subcommands: 'charges', 'offers', 'testpay', 'testcard', 'getcustomer', 'updatecustomer', 'lscustomers'")
       return
   }
 }
 
-func Invoice (keyArg *string, emailArg *string, amountArg *string, descArg *string, offerArg *string) {
-  stripey.SetKey(*keyArg)
+func Invoice (emailArg *string, amountArg *string, descArg *string, offerArg *string) {
   email := *emailArg
 
   amount,err1 := strconv.Atoi(*amountArg)
@@ -189,7 +199,6 @@ func Invoice (keyArg *string, emailArg *string, amountArg *string, descArg *stri
     return
   }
 
-  stripey.SetKey(*keyArg)
   stripey.CreateInvoice(email, description, int64(amount), offerid)
 }
 
