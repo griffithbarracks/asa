@@ -1,6 +1,6 @@
 module stripey.go
 
-go 1.17
+go 1.20
 
 require (
 	github.com/joho/godotenv v1.4.0
@@ -9,5 +9,5 @@ require (
 
 require (
 	github.com/stretchr/testify v1.7.1 // indirect
-	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b // indirect
+	golang.org/x/net v0.8.0 // indirect
 )
